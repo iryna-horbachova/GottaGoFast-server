@@ -72,7 +72,7 @@ DATABASES = {
 
         'NAME': 'gottagofast_mobility',
 
-        'USER': 'postgresß',
+        'USER': 'postgres',
 
         'PASSWORD': os.environ["pgpassword"],
 
