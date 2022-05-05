@@ -1,6 +1,8 @@
 from rest_framework.permissions import AllowAny
 from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from .serializers import (
     CustomTokenObtainPairSerializer,
@@ -30,7 +32,7 @@ class ClientListCreateAPIView(ListCreateAPIView):
         return super().get_permissions()
 
 
-class UserReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
+class ClientReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
 
@@ -48,3 +50,9 @@ class DriverListCreateAPIView(ListCreateAPIView):
 class DriverReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Driver.objects.all()
     serializer_class = DriverSerializer
+
+
+@api_view(http_method_names=['GET'])
+def get_active_drivers(request):
+    active_drivers = Driver.objects.filter(status=Driver.Statuses.ACTIVE)
+    return Response(active_drivers)

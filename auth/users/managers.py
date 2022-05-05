@@ -5,14 +5,12 @@ from django.utils.translation import gettext_lazy as _
 class UserManager(BaseUserManager):
 
     def create_user(self, first_name, last_name,
-                    gender, birth_date, phone_number,
-                    email, password, **extra_fields):
+                    phone_number, email, password,
+                    gender='U', birth_date=None, **extra_fields):
         if not email:
             raise ValueError(_('The Email must be set'))
         if not phone_number:
             raise ValueError(_('The Phone number must be set'))
-        if not first_name or last_name:
-            raise ValueError(_('The Name must be set'))
 
         email = self.normalize_email(email)
         user = self.model(first_name=first_name,last_name=last_name,
@@ -24,13 +22,19 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, first_name, last_name,
-                        gender, birth_date, phone_number,
-                        email, password):
-        user = self.create_user(
+                         email, password, phone_number,
+                         birth_date=None, gender='U', **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError(_('Superuser must have is_staff=True.'))
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError(_('Superuser must have is_superuser=True.'))
+
+        return self.create_user(
             first_name=first_name, last_name=last_name,
-            gender=gender, birth_date=birth_date,
-            phone_number=phone_number, email=email, password=password
+            gender=gender, birth_date=birth_date,phone_number=phone_number,
+            email=email, password=password, **extra_fields
         )
-        user.admin = True
-        user.save(using=self._db)
-        return user

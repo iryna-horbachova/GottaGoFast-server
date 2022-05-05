@@ -1,17 +1,18 @@
 from django.db import models
-from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from .managers import UserManager
 
 
-class User(AbstractBaseUser):
+class User(AbstractUser):
     class Genders(models.TextChoices):
         FEMALE = 'F', _('Female')
         MALE = 'M', _('Male')
         UNKNOWN = 'U', _('Unknown')
 
+    username = None
     email = models.EmailField(
         _('email address'),
         max_length=255,
@@ -32,6 +33,7 @@ class User(AbstractBaseUser):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'phone_number']
 
 
 class Client(models.Model):
