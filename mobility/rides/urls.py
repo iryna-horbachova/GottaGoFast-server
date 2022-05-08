@@ -12,4 +12,5 @@ urlpatterns = [
     path('rides/designated/requested_ride_/driver/<int:driver_id>/', views.get_new_designation_for_driver, name='new-designation-for-driver'),
 
     path('rides/statuses/', views.get_designated_ride_statuses, name='rides-statuses'),
+    path('location/update/', views.update_user_location, name='update-user-location'),
 ]

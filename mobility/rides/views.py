@@ -1,6 +1,9 @@
 from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.exceptions import NotAuthenticated
+
+from datetime import datetime
 
 from .models import (
     RideRequest,
@@ -11,6 +14,7 @@ from .serializers import (
     DesignatedRideSerializer
 )
 from .services import AuthenticationManager
+from .storage import GeoStorageManager
 
 
 class RideRequestListCreateAPIView(ListCreateAPIView):
@@ -66,3 +70,15 @@ def get_new_designation_for_driver(request, driver_id):
         serialized_data = DesignatedRideSerializer(designated_ride).data
 
     return Response({'designated_ride': serialized_data})
+
+
+@api_view(http_method_names=['POST'])
+def update_user_location(request):
+    user_id = AuthenticationManager().get_user_id(headers=request.headers)
+    if not user_id:
+        raise NotAuthenticated()
+
+    entry = {'user_id': user_id, 'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+             'latitude': request.data['latitude'], 'longitude': request.data['longitude']}
+    GeoStorageManager.insert_one(entry)
+
