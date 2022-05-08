@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'psycopg2',
     'requests',
+    'geopy',
 
     'rides'
 ]
