@@ -9,7 +9,7 @@ from .models import RideRequest, DesignatedRide
 
 class AuthenticationManager:
 
-    BASE_URL = 'http://localhost:8080/'
+    BASE_URL = 'http://localhost:8000/'
     USER_ID_ENDPOINT = 'api/profile/user/id/'
     AUTHORIZATION_HEADER = 'Authorization'
 
@@ -18,10 +18,9 @@ class AuthenticationManager:
             return None
 
         # Call authentication microservice
-        url = self.BASE_URL + self.USER_ID_ENDPOINT
         user_id_request = requests.get(url, headers=headers)
 
-        if user_id_request.status_code == 401:
+        if not user_id_request or user_id_request.status_code == 401:
             return None
 
         return user_id_request.json()['user_id']

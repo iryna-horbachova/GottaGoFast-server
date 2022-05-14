@@ -13,4 +13,5 @@ urlpatterns = [
 
     path('rides/statuses/', views.get_designated_ride_statuses, name='rides-statuses'),
     path('location/update/', views.update_user_location, name='update-user-location'),
+    path('location/get/<int:user_id>/', views.get_latest_user_location, name='get-user-location'),
 ]

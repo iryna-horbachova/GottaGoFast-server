@@ -58,7 +58,7 @@ def get_designation_for_requested_ride(request, requested_ride_id):
     if designated_ride:
         serialized_data = DesignatedRideSerializer(designated_ride).data
 
-    return Response({'designated_ride': serialized_data})
+    return Response(serialized_data)
 
 
 @api_view(http_method_names=['GET'])
@@ -69,16 +69,35 @@ def get_new_designation_for_driver(request, driver_id):
     if designated_ride:
         serialized_data = DesignatedRideSerializer(designated_ride).data
 
-    return Response({'designated_ride': serialized_data})
+    return Response(serialized_data)
 
 
 @api_view(http_method_names=['POST'])
 def update_user_location(request):
-    user_id = AuthenticationManager().get_user_id(headers=request.headers)
+    user_id = AuthenticationManager().get_user_id_or_none(headers=request.headers)
     if not user_id:
         raise NotAuthenticated()
 
     entry = {'user_id': user_id, 'timestamp': datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
              'latitude': request.data['latitude'], 'longitude': request.data['longitude']}
     GeoStorageManager.insert_one(entry)
+    return Response({'status': 'success'})
 
+
+@api_view(http_method_names=['GET'])
+def get_latest_user_location(request, user_id):
+    return Response({'geotag': GeoStorageManager.find_latest_user_location(user_id)})
+
+
+@api_view(http_method_names=['PUT'])
+def update_designated_ride_status(request, designated_ride_id):
+    user_id = AuthenticationManager().get_user_id_or_none(headers=request.headers)
+    if not user_id:
+        raise NotAuthenticated()
+
+    status = request.data['status']
+    designated_ride = DesignatedRide.objects.get(id=designated_ride_id)
+    designated_ride.status = status
+    designated_ride.save()
+
+    return Response({'status': 'success'})

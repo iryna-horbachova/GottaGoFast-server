@@ -50,8 +50,14 @@ class Vehicle(models.Model):
         TRUCK = 'T', _('Truck')
         MINIVAN = 'M', _('Minivan')
 
+    class Categories(models.TextChoices):
+        ECONOMY = 'E', _('Econom')
+        NORMAL = 'N', _('Normal')
+        COMFORT = 'C', _('Comfort')
+
     model = models.CharField(_('model'), max_length=25)
-    type = models.CharField(_('type'), choices=Types.choices, max_length=25)
+    type = models.CharField(_('type'), choices=Types.choices, max_length=2)
+    category = models.CharField(_('category'), choices=Categories.choices, max_length=2, default=Categories.NORMAL)
     insurance_policy_number = models.CharField(_('insurance policy number'), max_length=25)
     adults_seats_number = models.IntegerField(
         _('adults seats number'), default=0,

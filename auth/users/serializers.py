@@ -8,7 +8,7 @@ from .models import User, Client, Driver, Vehicle
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name', 'gender', 'phone_number', 'birth_date']
+        fields = ['id', 'email', 'first_name', 'last_name', 'gender', 'phone_number']
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -16,7 +16,7 @@ class ClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client
-        fields = ['user', 'ride_discount']
+        fields = ['user']
 
 
 class VehicleSerializer(serializers.ModelSerializer):
@@ -24,7 +24,7 @@ class VehicleSerializer(serializers.ModelSerializer):
         model = Vehicle
         fields = ['id', 'model', 'type', 'insurance_policy_number',
                   'adults_seats_number', 'children_seats_number', 'animal_seats_number',
-                  'trunk_capacity', 'air_conditioner_present']
+                  'trunk_capacity', 'air_conditioner_present', 'category']
 
 
 class DriverSerializer(serializers.ModelSerializer):
@@ -69,17 +69,18 @@ class DriverRegistrationSerializer(DriverSerializer):
         first_name = user['first_name']
         last_name = user['last_name']
         gender = user['gender']
-        birth_date = user['birth_date']
+        #birth_date = user['birth_date']
         phone_number = user['phone_number']
 
         created_user = User.objects.create_user(email=email, password=password,
                                                 first_name=first_name, last_name=last_name,
-                                                gender=gender, birth_date=birth_date, phone_number=phone_number)
+                                                gender=gender, birth_date=None, phone_number=phone_number)
 
         # Create Vehicle entity
         vehicle = validated_data['vehicle']
         model = vehicle['model']
         type = vehicle['type']
+        category = vehicle['category']
         insurance_policy_number = vehicle['insurance_policy_number']
         adults_seats_number = vehicle['adults_seats_number']
         children_seats_number = vehicle['children_seats_number']
@@ -90,14 +91,14 @@ class DriverRegistrationSerializer(DriverSerializer):
         created_vehicle = Vehicle.objects.create(model=model, type=type, insurance_policy_number=insurance_policy_number,
                                                  adults_seats_number=adults_seats_number, children_seats_number=children_seats_number,
                                                  animal_seats_number=animal_seats_number, trunk_capacity=trunk_capacity,
-                                                 air_conditioner_present=air_conditioner_present)
+                                                 air_conditioner_present=air_conditioner_present, category=category)
 
         # Create Driver entity
         passport_number = validated_data['passport_number']
         driver_license_number = validated_data['driver_license_number']
         taxi_license_number = validated_data['taxi_license_number']
 
-        driver = Driver.objects.create(user=user, vehicle=vehicle,
+        driver = Driver.objects.create(user=created_user, vehicle=created_vehicle,
                                        passport_number=passport_number,
                                        driver_license_number=driver_license_number,
                                        taxi_license_number=taxi_license_number)
@@ -136,14 +137,14 @@ class ClientRegistrationSerializer(ClientSerializer):
         first_name = user['first_name']
         last_name = user['last_name']
         gender = user['gender']
-        birth_date = user['birth_date']
+        #birth_date = user['birth_date']
         phone_number = user['phone_number']
 
         created_user = User.objects.create_user(email=email, password=password,
                                                 first_name=first_name, last_name=last_name,
-                                                gender=gender, birth_date=birth_date, phone_number=phone_number)
+                                                gender=gender, birth_date=None, phone_number=phone_number)
 
-        client = Client(user=created_user)
+        client = Client.objects.create(user=created_user)
         return client
 
 
