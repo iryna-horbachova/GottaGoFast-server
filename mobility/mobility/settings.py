@@ -1,5 +1,8 @@
 from pathlib import Path
+from celery import Celery
 import os
+from celery.schedules import crontab
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ["SECRET_KEY"]
+SECRET_KEY = 'django-insecure-o(ld)o!i1(6n0vq7*e_(^ys22u_xo9a$pql%frn55$1h*09)t8'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -32,6 +35,8 @@ INSTALLED_APPS = [
     'psycopg2',
     'requests',
     'geopy',
+    'redis',
+    'django_celery_beat',
 
     'rides'
 ]
@@ -129,3 +134,31 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+'''os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mobility.settings')
+
+app = Celery('proj')
+
+# Using a string here means the worker don't have to serialize
+# the configuration object to child processes.
+# - namespace='CELERY' means all celery-related configuration keys
+#   should have a `CELERY_` prefix.
+app.config_from_object('django.conf:settings', namespace='CELERY')
+
+# Load task modules from all registered Django app configs.
+app.autodiscover_tasks()'''
+
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULE = {
+    "scheduled_task": {
+        "task": "rides.services.schedule_designated_rides",
+        "schedule": 7.0,
+    }
+}

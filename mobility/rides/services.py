@@ -6,6 +6,15 @@ from types import SimpleNamespace
 
 from .models import RideRequest, DesignatedRide
 
+from celery import Celery
+
+app = Celery('mobility')
+app.config_from_object('django.conf:settings', namespace='CELERY')
+
+@app.task
+def schedule_designated_rides():
+    RidesDesignationManager().designate_rides()
+
 
 class AuthenticationManager:
 
@@ -76,6 +85,7 @@ class RidesDesignationManager:
         return BASE_RATE_PER_KM * ride_distance
 
     def designate_rides(self):
+        print("**** Designate rides ****")
         # Create a set of requested ride that do not have an assignment yet
         already_designated_rides = DesignatedRide.objects.values_list('ride_request_id', flat=True)
         ride_requests = list((RideRequest.objects.in_bulk(already_designated_rides, field_name='id')).values())
