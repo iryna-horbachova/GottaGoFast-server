@@ -2,6 +2,8 @@ from rest_framework.generics import RetrieveUpdateDestroyAPIView, ListCreateAPIV
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import NotAuthenticated
+import json
+from bson.json_util import dumps
 
 from datetime import datetime
 
@@ -22,7 +24,7 @@ class RideRequestListCreateAPIView(ListCreateAPIView):
     serializer_class = RideRequestSerializer
 
     def check_permissions(self, request):
-        if not AuthenticationManager().get_user_id(headers=request.headers):
+        if not AuthenticationManager().get_user_id_or_none(headers=request.headers):
             self.permission_denied(request)
 
 
@@ -31,7 +33,7 @@ class RideRequestReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = RideRequestSerializer
 
     def check_permissions(self, request):
-        if not AuthenticationManager().get_user_id(headers=request.headers):
+        if not AuthenticationManager().get_user_id_or_none(headers=request.headers):
             self.permission_denied(request)
 
 
@@ -40,7 +42,7 @@ class DesignatedRideReadUpdateDeleteAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = DesignatedRideSerializer
 
     def check_permissions(self, request):
-        if not AuthenticationManager().get_user_id(headers=request.headers):
+        if not AuthenticationManager().get_user_id_or_none(headers=request.headers):
             self.permission_denied(request)
 
 
@@ -86,7 +88,7 @@ def update_user_location(request):
 
 @api_view(http_method_names=['GET'])
 def get_latest_user_location(request, user_id):
-    return Response({'geotag': GeoStorageManager.find_latest_user_location(user_id)})
+    return Response(json.loads(dumps(GeoStorageManager.find_latest_user_location(user_id))))
 
 
 @api_view(http_method_names=['PUT'])
@@ -100,4 +102,11 @@ def update_designated_ride_status(request, designated_ride_id):
     designated_ride.status = status
     designated_ride.save()
 
+    return Response({'status': 'success'})
+
+
+@api_view(http_method_names=['DELETE'])
+def cancel_ride_request(request, pk):
+    RideRequest.objects.filter(id=pk).delete()
+    DesignatedRide.objects.filter(ride_request_id=pk).update(status="C")
     return Response({'status': 'success'})

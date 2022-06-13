@@ -19,7 +19,9 @@ class GeoStorageManager:
     @staticmethod
     def find_latest_user_location(user_id):
         query = {"user_id": user_id}
-        locations = collection.find(query).sort("timestamp", -1)
-        if not locations:
-            return None
-        return locations[0]
+        location = collection.find_one(query, sort=[('timestamp', -1)])
+
+        print("******* LOCATIONS")
+        print(location)
+
+        return location

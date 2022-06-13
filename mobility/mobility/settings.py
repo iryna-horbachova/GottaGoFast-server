@@ -161,6 +161,6 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULE = {
     "scheduled_task": {
         "task": "rides.services.schedule_designated_rides",
-        "schedule": 7.0,
+        "schedule": 1.0,
     }
 }

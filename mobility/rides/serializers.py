@@ -15,4 +15,4 @@ class RideRequestSerializer(serializers.ModelSerializer):
 class DesignatedRideSerializer(serializers.ModelSerializer):
     class Meta:
         model = DesignatedRide
-        fields = ['driver_id', 'ride_request_id', 'price', 'status']
+        fields = ['id', 'driver_id', 'ride_request_id', 'price', 'status']

@@ -6,6 +6,7 @@ from . import views
 urlpatterns = [
     path('rides/request/<int:pk>/', views.RideRequestReadUpdateDeleteAPIView.as_view(), name='ride-request-detail'),
     path('rides/request/create/', views.RideRequestListCreateAPIView.as_view(), name='ride-request-create'),
+    path('rides/request/cancel/<int:pk>/', views.cancel_ride_request, name='ride-request-cancel'),
 
     path('rides/designated/<int:pk>/', views.DesignatedRideReadUpdateDeleteAPIView.as_view(), name='designated-ride-detail'),
     path('rides/designated/requested_ride/<int:requested_ride_id>/', views.get_designation_for_requested_ride, name='designation-for-requested_ride'),

@@ -1,19 +1,19 @@
 import requests
-import json
 import datetime
 from geopy import distance
-from types import SimpleNamespace
-from django.db.models import Q
 
 from .models import RideRequest, DesignatedRide
 
 from celery import Celery
+
+from .storage import GeoStorageManager
 
 app = Celery('mobility')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 @app.task
 def schedule_designated_rides():
+    print("designated rides")
     RidesDesignationManager().designate_rides()
 
 
@@ -52,8 +52,6 @@ class RidesDesignationManager:
         matched_drivers = []
 
         for driver in drivers:
-            print("driver ****")
-            print(driver)
             if driver['vehicle']['adults_seats_number'] < ride_request.adults_seats_number or \
                 driver['vehicle']['children_seats_number'] < ride_request.children_seats_number or \
                 driver['vehicle']['animal_seats_number'] < ride_request.animal_seats_number or \
@@ -75,6 +73,12 @@ class RidesDesignationManager:
     def calculate_ride_cost_for_driver(self, ride_request, driver):
         BASE_RATE_PER_KM = 0.38
 
+        # Check vehicle type
+        if driver['vehicle']['type'] == 'M':
+            BASE_RATE_PER_KM = 0.45
+        elif driver['vehicle']['type'] == 'T':
+            BASE_RATE_PER_KM = 0.5
+
         # Check vehicle category
         if driver['vehicle']['category'] == "E":
             BASE_RATE_PER_KM *= 0.85
@@ -87,26 +91,27 @@ class RidesDesignationManager:
         if weekday == 5 or weekday == 6:
             BASE_RATE_PER_KM *= 1.17
 
-        # TO-DO: add driver distance to the start point
-
-        # Calculate distance between start and end points
+        # Calculate distance between driver+start point, start point+end point
         start_point = (ride_request.start_location_latitude, ride_request.start_location_longitude)
         end_point = (ride_request.end_location_latitude, ride_request.end_location_longitude)
         ride_distance = distance.distance(start_point, end_point).km
 
-        return BASE_RATE_PER_KM * ride_distance
+        current_driver_geotag = GeoStorageManager.find_latest_user_location(driver['user']['id'])
+        distance_to_start = 1
+
+        if current_driver_geotag:
+            current_driver_location = (current_driver_geotag['latitude'], current_driver_geotag['longitude'])
+            distance_to_start = distance.distance(current_driver_location, start_point).km
+
+        return round((BASE_RATE_PER_KM * ride_distance + BASE_RATE_PER_KM * 0.8 * distance_to_start) * 10, 2)
 
     def designate_rides(self):
-        print("**** Designate rides ****")
+        print("designate rides")
         # Create a set of requested ride that do not have an assignment yet
-        print("already designated rides")
         already_designated_rides_ids = DesignatedRide.objects.values_list('ride_request_id', flat=True)
-        print(already_designated_rides_ids)
 
         ride_requests = list((RideRequest.objects.exclude(id__in=already_designated_rides_ids)))
-        print("ride requests")
-        print(ride_requests)
-
+        print("ride requests", ride_requests)
         if not ride_requests:
             return
         ride_requests.sort(key=lambda request: request.timestamp)
@@ -120,10 +125,9 @@ class RidesDesignationManager:
 
         # Iterate through all ride requests
         for request in ride_requests:
+            print("request", request)
             # Form a set of drivers that match condition
             matched_drivers = self.matched_drivers_for_request(request, active_drivers)
-            print("matched drivers")
-            print(matched_drivers)
 
             if not matched_drivers:
                 continue
@@ -133,10 +137,13 @@ class RidesDesignationManager:
             for driver in matched_drivers:
                 cost_to_drivers[self.calculate_ride_cost_for_driver(request, driver)] = driver
 
-            print("cost_to_drivers")
+
+            print("COST TO DRIVERS")
             print(cost_to_drivers)
-            minimum_cost = min(cost_to_drivers, key=cost_to_drivers.get)
-            d_ride = DesignatedRide.objects.create(
+            costs = list(cost_to_drivers.keys())
+            minimum_cost = min(costs)
+            #minimum_cost = min(cost_to_drivers, key=cost_to_drivers.get)
+            DesignatedRide.objects.create(
                 ride_request_id=request.id,
                 driver_id=cost_to_drivers[minimum_cost]['user']['id'],
                 price=minimum_cost
